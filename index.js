@@ -13,12 +13,19 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASSWORD}@cluster0.jtzcp.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+async function run() {
+    try {
+        const accessoriesCollection = client.db("accessories_manufacturer").collection("accessories");
+    } finally {
 
+    }
+}
+run().catch(console.dir);
 
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+    res.send('Hello accessories manufacturer server');
 })
 
 app.listen(port, () => {
-    console.log(`Accessories manufacturer listening on port ${port}`)
+    console.log(`Accessories manufacturer listening on port ${port}`);
 })
