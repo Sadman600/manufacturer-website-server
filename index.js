@@ -51,6 +51,11 @@ async function run() {
             const result = await accessoriesCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         });
+        // create an API for get all order data
+        app.get('/order', async (req, res) => {
+            const result = await orderCollection.find().toArray();
+            res.send(result)
+        });
         // create an API for get login user order data
         app.get('/order/:email', async (req, res) => {
             const email = req.params.email;
