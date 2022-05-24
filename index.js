@@ -21,14 +21,41 @@ async function run() {
         const orderCollection = client.db("accessories_manufacturer").collection("orders");
         const userCollection = client.db("accessories_manufacturer").collection("users");
 
+        // create an API for get all accessories data
         app.get('/accessories', async (req, res) => {
             const accessories = await accessoriesCollection.find().toArray();
             res.send(accessories);
         });
+        // create an API for get single accessories data
         app.get('/accessories/:id', async (req, res) => {
             const id = req.params.id;
             const result = await accessoriesCollection.findOne({ _id: ObjectId(id) });
             res.send(result);
+        });
+        // create an API to update accessories data
+        app.put('/accessories/:id', async (req, res) => {
+            const id = req.params.id;
+            const accessories = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    name: accessories.name,
+                    description: accessories.description,
+                    minimumOrder: accessories.minimumOrder,
+                    availableQuantity: accessories.availableQuantity,
+                    price: accessories.price,
+                    img: accessories.img
+                },
+            };
+            const result = await accessoriesCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        });
+        // create an API for get login user order data
+        app.get('/order/:email', async (req, res) => {
+            const email = req.params.email;
+            const result = await orderCollection.find({ email: email }).toArray();
+            res.send(result)
         });
         // create an API to insert order
         app.post('/order', async (req, res) => {
