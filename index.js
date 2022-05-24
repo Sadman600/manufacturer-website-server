@@ -9,18 +9,66 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-
-
 const uri = `mongodb+srv://${process.env.USER_NAME}:${process.env.USER_PASSWORD}@cluster0.jtzcp.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJwt(req, res, next) {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return res.status(401).res.send({ message: 'Unauthorized access' })
+    }
+    const token = authorization.split(' ')[1];
+    jwt.verify(token, process.env.USER_SECRET_TOKEN, (err, decoded) => {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' });
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
 async function run() {
     try {
         await client.connect();
         const accessoriesCollection = client.db("accessories_manufacturer").collection("accessories");
         const orderCollection = client.db("accessories_manufacturer").collection("orders");
         const userCollection = client.db("accessories_manufacturer").collection("users");
+        // create an API for get all login user data
+        app.get('/user', verifyJwt, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        });
+        // create an API to update make admin login user data 
+        app.put('/user/admin/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.find({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: {
+                        role: 'admin'
+                    }
+                }
+                const result = await userCollection.updateOne(filter, updateDoc);
+                res.send({ result });
+            } else {
+                res.status(403).send({ message: 'Forbidden' })
+            }
 
+        });
+        // create an API to upsert login user data and sign token
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.USER_SECRET_TOKEN, { expiresIn: '1d' });
+            res.send({ result, token });
+        });
         // create an API for get all accessories data
         app.get('/accessories', async (req, res) => {
             const accessories = await accessoriesCollection.find().toArray();
@@ -33,7 +81,7 @@ async function run() {
             res.send(result);
         });
         // create an API for insert one accessories data
-        app.post('/accessories', async (req, res) => {
+        app.post('/accessories', verifyJwt, async (req, res) => {
             const accessories = req.body;
             const result = await accessoriesCollection.insertOne(accessories);
             res.send(result);
@@ -74,18 +122,7 @@ async function run() {
             const result = await orderCollection.insertOne(order);
             res.send(result);
         });
-        app.put('/user/:email', async (req, res) => {
-            const email = req.params.email;
-            const user = req.body;
-            const filter = { email: email };
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: user
-            };
-            const result = await userCollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.USER_SECRET_TOKEN, { expiresIn: '1d' });
-            res.send({ result, token });
-        });
+
 
     } finally {
 
