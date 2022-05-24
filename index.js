@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -18,11 +18,23 @@ async function run() {
     try {
         await client.connect();
         const accessoriesCollection = client.db("accessories_manufacturer").collection("accessories");
+        const orderCollection = client.db("accessories_manufacturer").collection("orders");
         const userCollection = client.db("accessories_manufacturer").collection("users");
 
         app.get('/accessories', async (req, res) => {
             const accessories = await accessoriesCollection.find().toArray();
             res.send(accessories);
+        });
+        app.get('/accessories/:id', async (req, res) => {
+            const id = req.params.id;
+            const result = await accessoriesCollection.findOne({ _id: ObjectId(id) });
+            res.send(result);
+        });
+        // create an API to insert order
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result);
         });
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
