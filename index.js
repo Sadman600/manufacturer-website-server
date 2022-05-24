@@ -32,6 +32,12 @@ async function run() {
             const result = await accessoriesCollection.findOne({ _id: ObjectId(id) });
             res.send(result);
         });
+        // create an API for insert one accessories data
+        app.post('/accessories', async (req, res) => {
+            const accessories = req.body;
+            const result = await accessoriesCollection.insertOne(accessories);
+            res.send(result);
+        });
         // create an API to update accessories data
         app.put('/accessories/:id', async (req, res) => {
             const id = req.params.id;
