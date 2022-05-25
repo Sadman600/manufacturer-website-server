@@ -153,6 +153,12 @@ async function run() {
             const result = await orderCollection.insertOne(order);
             res.send(result)
         });
+        // create an API to delete order
+        app.delete('/order/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const result = await orderCollection.deleteOne({ _id: ObjectId(id) });
+            res.send(result)
+        });
         // create an API for get review
         app.get('/review', async (req, res) => {
             const review = await reviewCollection.find().toArray();
