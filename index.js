@@ -75,6 +75,25 @@ async function run() {
             const token = jwt.sign({ email: email }, process.env.USER_SECRET_TOKEN, { expiresIn: '1d' });
             res.send({ result, token });
         });
+        // create an API to update login user profile data 
+        app.put('/user/update/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const updateUser = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    gender: updateUser.gender,
+                    nationality: updateUser.nationality,
+                    religion: updateUser.religion,
+                    location: updateUser.location,
+                    link: updateUser.link,
+                    img: updateUser.img
+                }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result)
+        });
         // create an API for get all accessories data
         app.get('/accessories', async (req, res) => {
             const accessories = await accessoriesCollection.find().toArray();
