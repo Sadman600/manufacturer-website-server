@@ -128,6 +128,11 @@ async function run() {
             const result = await orderCollection.insertOne(order);
             res.send(result)
         });
+        // create an API for get review
+        app.get('/review', async (req, res) => {
+            const review = await reviewCollection.find().toArray();
+            res.send(review)
+        });
         // create an API to insert review
         app.post('/review', verifyJwt, async (req, res) => {
             const review = req.body;
