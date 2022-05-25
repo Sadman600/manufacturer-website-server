@@ -32,25 +32,31 @@ async function run() {
         const accessoriesCollection = client.db("accessories_manufacturer").collection("accessories");
         const orderCollection = client.db("accessories_manufacturer").collection("orders");
         const userCollection = client.db("accessories_manufacturer").collection("users");
+        const reviewCollection = client.db("accessories_manufacturer").collection("reviews");
         // create an API for get all login user data
         app.get('/user', verifyJwt, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
         });
+        // create an API for search admin user 
+        app.get('/admin/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+        });
         // create an API to update make admin login user data 
         app.put('/user/admin/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
             const requester = req.decoded.email;
-            const requesterAccount = await userCollection.find({ email: requester });
+            const requesterAccount = await userCollection.findOne({ email: requester });
             if (requesterAccount.role === 'admin') {
                 const filter = { email: email };
                 const updateDoc = {
-                    $set: {
-                        role: 'admin'
-                    }
+                    $set: { role: 'admin' },
                 }
                 const result = await userCollection.updateOne(filter, updateDoc);
-                res.send({ result });
+                res.send(result);
             } else {
                 res.status(403).send({ message: 'Forbidden' })
             }
@@ -120,9 +126,14 @@ async function run() {
         app.post('/order', async (req, res) => {
             const order = req.body;
             const result = await orderCollection.insertOne(order);
-            res.send(result);
+            res.send(result)
         });
-
+        // create an API to insert review
+        app.post('/review', verifyJwt, async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result)
+        });
 
     } finally {
 
