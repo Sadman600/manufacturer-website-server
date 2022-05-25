@@ -75,6 +75,12 @@ async function run() {
             const token = jwt.sign({ email: email }, process.env.USER_SECRET_TOKEN, { expiresIn: '1d' });
             res.send({ result, token });
         });
+        // create an API for get login user data
+        app.get('/login/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            res.send(user);
+        });
         // create an API to update login user profile data 
         app.put('/user/update/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
