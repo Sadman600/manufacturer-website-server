@@ -136,8 +136,14 @@ async function run() {
             const result = await accessoriesCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         });
+        // create an API to delete accessories product
+        app.delete('/accessories/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const result = await accessoriesCollection.deleteOne({ _id: ObjectId(id) });
+            res.send(result)
+        });
         // create an API for get all order data
-        app.get('/order', async (req, res) => {
+        app.get('/order', verifyJwt, async (req, res) => {
             const result = await orderCollection.find().toArray();
             res.send(result)
         });
